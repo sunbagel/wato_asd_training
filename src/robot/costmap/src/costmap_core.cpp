@@ -4,7 +4,7 @@ namespace robot {
 
 CostmapCore::CostmapCore(const rclcpp::Logger &logger)
     : logger_(logger), width_(400), height_(400), resolution_(0.1),
-      inflation_radius_(0.3) {}
+      inflation_radius_(1.2) {}
 
 void CostmapCore::initializeCostmap() {
   costmap_data_.assign(width_ * height_, 0);

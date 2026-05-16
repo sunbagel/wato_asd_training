@@ -32,6 +32,7 @@ private:
   double goal_tolerance_;
   double linear_speed_;
   double max_angular_speed_;
+  double in_place_turn_threshold_;
 };
 
 #endif

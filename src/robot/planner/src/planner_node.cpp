@@ -7,7 +7,9 @@ PlannerNode::PlannerNode()
     : Node("planner_node"),
       planner_(robot::PlannerCore(
           this->get_logger(),
-          this->declare_parameter<int>("obstacle_threshold", 50))),
+          this->declare_parameter<int>("obstacle_threshold", 50),
+          this->declare_parameter<double>("inflation_cost_weight", 50.0),
+          this->declare_parameter<double>("unknown_cell_cost", 2.0))),
       state_(State::WAITING_FOR_GOAL)
 {
   goal_tolerance_ = this->declare_parameter<double>("goal_tolerance", 0.5);

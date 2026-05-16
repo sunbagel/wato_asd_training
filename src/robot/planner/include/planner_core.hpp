@@ -67,7 +67,8 @@ namespace robot
 
 class PlannerCore {
 public:
-  explicit PlannerCore(const rclcpp::Logger &logger, int obstacle_threshold);
+  explicit PlannerCore(const rclcpp::Logger &logger, int obstacle_threshold,
+                       double inflation_cost_weight, double unknown_cell_cost);
 
   // Plan a path from world (sx, sy) to world (gx, gy) using A* on map.
   // Returns an ordered list of PoseStamped waypoints (in the map frame),
@@ -87,6 +88,8 @@ private:
 
   rclcpp::Logger logger_;
   int obstacle_threshold_;
+  double inflation_cost_weight_;
+  double unknown_cell_cost_;
 };
 
 }  // namespace robot

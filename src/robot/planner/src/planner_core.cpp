@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <queue>
 #include <unordered_map>
 
@@ -7,8 +8,10 @@
 namespace robot
 {
 
-PlannerCore::PlannerCore(const rclcpp::Logger &logger, int obstacle_threshold)
-    : logger_(logger), obstacle_threshold_(obstacle_threshold) {}
+PlannerCore::PlannerCore(const rclcpp::Logger &logger, int obstacle_threshold,
+                         double inflation_cost_weight, double unknown_cell_cost)
+    : logger_(logger), obstacle_threshold_(obstacle_threshold),
+      inflation_cost_weight_(inflation_cost_weight), unknown_cell_cost_(unknown_cell_cost) {}
 
 // helpers
 bool PlannerCore::worldToGrid(const nav_msgs::msg::OccupancyGrid &map,
@@ -60,6 +63,29 @@ std::vector<geometry_msgs::msg::PoseStamped> PlannerCore::planPath(
   if (isBlocked(map, goal_cx, goal_cy)) {
     RCLCPP_WARN(logger_, "Goal cell is blocked.");
     return {};
+  }
+
+  // If robot stuck near wall, snap the start to the nearest free cell
+  if (isBlocked(map, start_cx, start_cy)) {
+    bool found = false;
+    for (int radius = 1; radius <= 10 && !found; ++radius) {
+      for (int dy = -radius; dy <= radius && !found; ++dy) {
+        for (int dx = -radius; dx <= radius && !found; ++dx) {
+          if (std::abs(dx) != radius && std::abs(dy) != radius) continue;
+          int nx = start_cx + dx, ny = start_cy + dy;
+          if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+          if (!isBlocked(map, nx, ny)) {
+            start_cx = nx;
+            start_cy = ny;
+            found = true;
+          }
+        }
+      }
+    }
+    if (!found) {
+      RCLCPP_WARN(logger_, "Start cell is blocked and no free cell found nearby.");
+      return {};
+    }
   }
 
   CellIndex start(start_cx, start_cy);
@@ -121,7 +147,15 @@ std::vector<geometry_msgs::msg::PoseStamped> PlannerCore::planPath(
       }
 
       CellIndex neighbor(nx, ny);
-      double tentative_g = g_curr + step_cost[i];
+      // Add penalty for inflated/unknown cells so we don't ride too close to walls
+      int8_t cell_val = map.data[ny * width + nx];
+      double cell_cost = 0.0;
+      if (cell_val < 0) {
+        cell_cost = unknown_cell_cost_;
+      } else if (cell_val > 0) {
+        cell_cost = (static_cast<double>(cell_val) / 100.0) * inflation_cost_weight_;
+      }
+      double tentative_g = g_curr + step_cost[i] + cell_cost;
 
       auto it = g_score.find(neighbor);
       if (it == g_score.end() || tentative_g < it->second) {

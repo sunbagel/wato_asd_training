@@ -10,7 +10,8 @@ ControlNode::ControlNode()
   lookahead_distance_ = this->declare_parameter<double>("lookahead_distance", 1.0);
   goal_tolerance_     = this->declare_parameter<double>("goal_tolerance", 0.3);
   linear_speed_       = this->declare_parameter<double>("linear_speed", 0.5);
-  max_angular_speed_  = this->declare_parameter<double>("max_angular_speed", 1.5);
+  max_angular_speed_  = this->declare_parameter<double>("max_angular_speed", 2.5);
+  in_place_turn_threshold_ = this->declare_parameter<double>("in_place_turn_threshold", M_PI / 2.0);
   int control_period_ms = this->declare_parameter<int>("control_period_ms", 100);
 
   path_sub_ = this->create_subscription<nav_msgs::msg::Path>(
@@ -60,7 +61,8 @@ void ControlNode::controlLoop() {
   double yaw = control_.extractYaw(robot_odom_->pose.pose.orientation);
   auto cmd = control_.computeVelocity(
     *lookahead, robot_pos, yaw,
-    linear_speed_, lookahead_distance_, max_angular_speed_);
+    linear_speed_, lookahead_distance_, max_angular_speed_,
+    in_place_turn_threshold_);
 
   cmd_vel_pub_->publish(cmd);
 }

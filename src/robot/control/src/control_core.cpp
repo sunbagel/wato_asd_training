@@ -38,7 +38,8 @@ geometry_msgs::msg::Twist ControlCore::computeVelocity(
   double robot_yaw,
   double linear_speed,
   double lookahead_distance,
-  double max_angular_speed) const
+  double max_angular_speed,
+  double in_place_turn_threshold) const
 {
   double dx = target.pose.position.x - robot_pos.x;
   double dy = target.pose.position.y - robot_pos.y;
@@ -52,7 +53,18 @@ geometry_msgs::msg::Twist ControlCore::computeVelocity(
   while (alpha < -M_PI) alpha += 2.0 * M_PI;
 
   geometry_msgs::msg::Twist cmd;
-  cmd.linear.x = linear_speed;
+
+  // If badly misaligned, rotate in place toward the target before driving
+  // Overriding pure pursuit BECAUSE IT CAN'T ROTATE IN PLACE LOL
+  if (std::fabs(alpha) > in_place_turn_threshold) {
+    cmd.linear.x = 0.0;
+    cmd.angular.z = std::copysign(max_angular_speed, alpha);
+    return cmd;
+  }
+
+  // cos(alpha) scaling because our arcs are too wide, lets us rotate to match
+  // angle of lookahead point
+  cmd.linear.x = linear_speed * (0.5 + 0.5 * std::cos(alpha));
   cmd.angular.z = std::clamp(
     2.0 * linear_speed * std::sin(alpha) / lookahead_distance,
     -max_angular_speed, max_angular_speed);

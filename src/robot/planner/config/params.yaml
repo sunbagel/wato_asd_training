@@ -2,5 +2,7 @@ planner_node:
   ros__parameters:
     global_frame: "sim_world"
     goal_tolerance: 0.5
-    obstacle_threshold: 50
+    obstacle_threshold: 25
     plan_period_ms: 500
+    inflation_cost_weight: 50.0
+    unknown_cell_cost: 2.0

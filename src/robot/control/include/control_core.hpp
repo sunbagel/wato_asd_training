@@ -30,7 +30,8 @@ public:
     double robot_yaw,
     double linear_speed,
     double lookahead_distance,
-    double max_angular_speed) const;
+    double max_angular_speed,
+    double in_place_turn_threshold) const;
 
   // 2-D Euclidean distance 
   double distance(
