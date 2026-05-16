@@ -11,14 +11,14 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # Search for dependencies required for building this package
-find_package(ament_cmake REQUIRED) # ROS2 build tool
-find_package(rclcpp REQUIRED)      # ROS2 C++ package
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 # Compiles source files into a library
-# A library is not executed, instead other executables can link
-# against it to access defined methods and classes.
-# We build a library so that the methods defined can be used by
-# both the unit test and ROS2 node executables.
 add_library(control_lib
   src/control_core.cpp)
 # Indicate to compiler where to search for header files
@@ -29,11 +29,15 @@ target_include_directories(control_lib
 # Add ROS2 dependencies required by package
 ament_target_dependencies(control_lib
   rclcpp
+  nav_msgs
+  geometry_msgs
+  tf2
+  tf2_geometry_msgs
 )
 
 # Create ROS2 node executable from source files
 add_executable(control_node src/control_node.cpp)
-# Link to the previously built library to access Transformer classes and methods
+# Link to the previously built library to access ControlCore classes and methods
 target_link_libraries(control_node control_lib)
 
 # Copy executable to installation location
